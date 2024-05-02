@@ -1,0 +1,34 @@
+1.1.0     preprocessing in tpv_trial object, acquisition with tpv_imager
+1.1.2     corrected bug with license validity date, no more dependency to Image toolbox!
+1.1.4     improved 'Change current display'
+1.1.5     removed bug that prevented correct notification of license-related issues
+1.1.6     bug fix in fn_poly2mask when some polygon segments are outside the image
+          now there can be licenses specific for tpview (free under
+          collaboration, as opposed to commercial)
+1.1.7     produced at Viola's lab; added 'DF/F' and 'threshold low', several bugs corrected
+1.2.0     after visit to Viola, corrected many bugs, opened much of the code (all except fn4d_toolbox and tpview folders)
+1.2.1     added 'Export image/signals to Matlab...' - packaging was badly done
+1.2.2     corrected the packaging
+1.3.0     explor toolbox is now open-source, added script for automatic region based on a threshold
+1.3.1     bug fixes for trial registrations when multiple conditions
+1.4.0     improved nomenclatures, and removed obscure features (or put them into new 'modules' that are inactive by default)
+1.4.1     1.4.0 had a folder 'Optimage' inside the main folder, with every files being repeated!
+1.4.2     (changes only in brick)
+1.4.3     removed some corrections in reading MES files that are not needed any more (probably MES bugs were fixed)
+1.4.4     mask2poly was missing in the previous version!
+1.4.5     coregistration now possible independently for each trial (no global registration between trials)
+1.4.6     add explor.mat to the package
+1.4.7     for Mohit: includes scripts for his team
+1.4.8     for Seb: handle one seemingly additional frame with FoldedFrame recordings in .mes files
+1.5.0     for JR Martin: improved slightly functional connectivity scripts
+1.5.1     ndSparse was missing, added it
+1.6.0     No more license!!
+1.6.1     Added 'license.txt' though to define use terms
+1.6.2     (very minor warning fix)
+1.6.3     read movie from multiple image files (typically tiff)
+1.6.4     no change except in 'brick' dependency; hoping that no bug was created...
+1.7.0     become open source!!!
+1.7.1     (fixes for new Matlab versions)
+1.7.2     (fixed 'selection reset' for Kazunori)
+1.7.3     (improved timer and PCL file reading)
+1.8.0     shared on github / reorganized folders

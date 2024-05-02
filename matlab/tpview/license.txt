@@ -1,0 +1,20 @@
+********************
+* OptImage license *
+********************
+
+September 9th, 2019
+
+The OptImage software is property of Thomas Deneux (thomas.deneux@cnrs.fr) and is distributed by him and by Optical Imaging Ltd. (https://opt-imaging.com).
+
+The OptImage software can be copied and distributed freely, its code can be used in the context of other projects, but not for commercial use. 
+
+In particular the code inside the 'tpview' and 'tpbasic' folders cannot be used for commercial use. The code inside 'tpview' is encrypted while the code inside 'tpbasic' is open-source.
+
+The following components are open-source, can be found on https://github.com/thomasdeneux and can be re-used without restriction:
+- brick
+- colormaps
+- explor
+- io
+
+The components inside 'matlab exchange' are open-source, can be found on https://fr.mathworks.com/matlabcentral/fileexchange/, and are distributed with BSD license.
+

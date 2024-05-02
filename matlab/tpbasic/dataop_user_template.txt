@@ -1,0 +1,8 @@
+function y = WRITE_FUNCTION_NAME_HERE(x) 
+% This function defines a custom operation on data.
+% Input x is a 3D or 4D array (x*y*time*condition), or in the case of line 
+% scan, a 2D or 3D array (x*time*condition).
+% Output y should be an array of the same size.
+% Edit the code below to define the function
+
+y = x;

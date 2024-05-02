@@ -1,0 +1,11 @@
+function label = WRITE_SCRIPT_NAME_HERE(V) 
+% function f(V) 
+% function label = f('label') 
+
+if nargin==0, V=evalin('base','V'); end
+if ischar(V) && strcmp(V,'label')
+    label = 'WRITE_SCRIPT_LABEL_HERE';
+    return
+end
+
+% Write script code below
