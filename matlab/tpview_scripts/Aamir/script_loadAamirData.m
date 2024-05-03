@@ -1,15 +1,16 @@
-function label = script_loadAamirData(V)
+function label = script_loadAamirData(V, always_ask)
 % function f(V)
 % function label = f('label')
 
 if nargin==0, V=evalin('base','V'); end
+if nargin<2, always_ask = false; end
 if ischar(V) && strcmp(V,'label')
     label = 'Load Aamir data';
     return
 end
 
 % Config file
-if isfield(V.content.user,'fconfig')
+if isfield(V.content.user,'fconfig') && ~always_ask
     % already a config file, the script will scan for new data instead of
     % re-loading everything
     fconfig = V.content.user.fconfig;
@@ -139,12 +140,12 @@ for kcond = 1:ncond
                 datek(ktrial) = Tk{ktrial}.user.date;
             end
         end
-        [datek, ord] = sort(datek); 
+        [~, ord] = sort(datek); 
         T{ksession} = [Tk{ord}];
         
         % set some header info
         T{ksession}.setstim(struct('name',condnames{ksession}));
-    end;
+    end
     data{kcond,:} = [T{:}];
 end
 data = [data{:}];
