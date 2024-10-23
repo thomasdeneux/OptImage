@@ -3,6 +3,8 @@ classdef tps_trial < hgsetget
     % function T = tps_trial(f[,flag])
     % function T = tps_trial(data[,sfr][,dx(um)|0,dt(s)][,'linescan'][,'zstack',dz][,'scanning'][,'units',xunit,tunit])
     % function T = tps_trial(data[,sfr],T0)
+    % function T = tps_trial(fmat[,dx(um)|0,dt(s)][,'linescan'][,'zstack',dz][,'scanning'][,'units',xunit,tunit])
+    % function T = tps_trial(fmat,T0)
     % function T = applyprocessing(T0[,'correctshift',nshift][,'translate',shift][,'crop',crop][,'user',fun])
     %---
     % flag can be 
@@ -20,6 +22,10 @@ classdef tps_trial < hgsetget
     %           'img' flag is specified, user is prompted to confirm
     %           whether he want a single movie trial or multiple
     %           single-image trials)
+    % 
+    % fmat can be either a file saved with tps_trial.savedata (i.e. has
+    % variables data, sfr and rec), or a matlab file containing a single
+    % variable (typically, saved using fn_savevar)
     % 
     % special fields of a tps_trial object:
     % - fullinfo    stores the maximal number of information from the
@@ -151,11 +157,20 @@ classdef tps_trial < hgsetget
             % function T = tps_trial(f[,flag])
             % function T = tps_trial(data[,sfr][,dx(um)|0,dt(s)][,'linescan'][,'zstack',dz][,'scanning'][,'units',xunit,tunit])
             % function T = tps_trial(data[,sfr],T0)
+            % function T = tps_trial(fmat[,dx(um)|0,dt(s)][,'linescan'][,'zstack',dz][,'scanning'][,'units',xunit,tunit])
+            % function T = tps_trial(fmat,T0)
             T.version = 2.0;
             if nargin==0, varargin = {0}; end
-            if ischar(varargin{1}) || (iscell(varargin{1}) && ischar(varargin{1}{1}))
+            x = varargin{1};
+            if ischar(x) || isstring(x) ...
+                    || (iscell(x) && (ischar(x{1}) || isstring(x{1})))
                 % first argument is a file or list of files
-                T = tps_trial.readheader(varargin{:});
+                f = varargin{1};
+                if strcmp(fn_fileparts(f, 'ext'), '.mat')
+                    T = userdefine(T,varargin{:});
+                else
+                    T = tps_trial.readheader(varargin{:});
+                end
             else
                 % make trial from data, use provided header information if
                 % any
@@ -176,7 +191,7 @@ classdef tps_trial < hgsetget
             if isempty(T0.file)
                 error 'cannot apply preprocessing to tps_trial object whose data is not saved'
             end
-            if isempty(T0.xbin~=1 || T0.tbin~=1)
+            if T0.xbin~=1 || T0.tbin~=1
                 error 'cannot apply preprocessing to tps_trial object with binning'
             end
             if ~isempty(T0.preprocess.op)
@@ -234,8 +249,9 @@ classdef tps_trial < hgsetget
         function T = userdefine(T,varargin)
             % data (automatic setting of sizes)
             dat = varargin{1};
+            % multiple trials?
             if (isnumeric(dat) || islogical(dat)) && ndims(dat)>4
-                % multiple trials
+                % multiple trials -> transform to cell array
                 dat = num2cell(dat,1:4);
                 dosfr = nargin>=3 && (isnumeric(varargin{2}) || islogical(varargin{2}));
                 if dosfr, varargin{2} = num2cell(varargin{2},1:4); end
@@ -253,6 +269,35 @@ classdef tps_trial < hgsetget
                     end
                 end
                 return
+            end
+            % set data
+            if ischar(dat) || isstring(dat)
+                % mat file -> postpone reading
+                f = dat;
+                assert(strcmp(fn_fileparts(f,'ext'),'.mat'), 'file argument to tps_trial.userdefine must be a mat file')
+                T.file = f;
+                % format as saved by tps_trial.savedata?
+                w = whos('-file', f);
+                wnames = {w.name};
+                if ismember('data', wnames) && all(ismember(wnames, {'data', 'rec', 'sfr'}))
+                    assert(strcmp(wnames{1}, 'data'))
+                    % presence of sfr channel?
+                    isfr = find(strcmp(wnames, 'sfr'));
+                    T.sfrchannel = ~isempty(isfr) && (prod(w(isfr).size) > 0);
+                    % presence of recording?
+                    if ismember('rec', wnames)
+                        rec = load(f,'rec');
+                        rec = rec.rec;  % cell array
+                        if ~isscalar(rec) || ~isempty(rec{1})
+                            warning 'non-empty recordings will not be loaded'
+                        end
+                    end
+                else
+                    assert(isscalar(w), 'if mat file was not saved using tps_trial.savedata, it must have only one variable')                    
+                    T.sfrchannel = false;
+                end                    
+                % no need to read data, it is enough to set sizes
+                T.sizes0 = w(1).size;
             elseif isnumeric(dat) || islogical(dat)
                 dosfr = nargin>=3 && (isnumeric(varargin{2}) || islogical(varargin{2})) ...
                     && ~isvector(varargin{2});
@@ -283,7 +328,7 @@ classdef tps_trial < hgsetget
                 while k<=nargin-1
                     a = varargin{k};
                     k = k+1;
-                    if ischar(a)
+                    if ischar(a) || isstring(a)
                         switch a
                             case 'zstack'
                                 T.type = 'zstack';
@@ -292,18 +337,18 @@ classdef tps_trial < hgsetget
                             case 'linescan'
                                 T.type = 'linescan';
                                 T.scanning = true;
-                            case 'scanning';
+                            case 'scanning'
                                 T.scanning = true;
                             case 'units'
                                 T.xunit = varargin{k};
                                 T.tunit = varargin{k+1};
                                 k = k+2;
                             otherwise
-                                error('unknown flag ''%s''',varargin{k})
+                                error('unknown flag ''%s''', a)
                         end
                     else
                         if a
-                            [T.dx T.dy] = deal(a);
+                            [T.dx, T.dy] = deal(a);
                             T.xunit = 'um';
                         end
                         T.dt = varargin{k};
@@ -664,7 +709,7 @@ classdef tps_trial < hgsetget
         function x = get.dataopmem(T)
             x = operation(T,'data',T.opmem);
         end
-        function [dat binning] = getcondition(T,dataname,condname,doenlarge)
+        function [dat, binning] = getcondition(T,dataname,condname,doenlarge)
             % function dat = getcondition(T,dataname,condname[,doenlarge])
             %---
             % getcondition does not return an empty array if the data does
@@ -747,7 +792,7 @@ classdef tps_trial < hgsetget
     
     % Recognized extensions
     methods (Static)
-        function [ext prompt] = knownExtensions()
+        function [ext, prompt] = knownExtensions()
             ext = {'tptrial','cfd','mpd','xml','mes','mesc','blk','vdq','da', ...
                 'pcl', ...
                 'avi','bmp','png','jpg','tif','tiff','gif', ...
@@ -940,7 +985,7 @@ classdef tps_trial < hgsetget
             nmes = length(header);
             
             % Load the header info
-            if ischar(flag)
+            if ischar(flag) || isstring(flag)
                 % Prompt user for a sub-selection?
                 if strcmp(flag,'prompt') && nmes>1
                     subchoice = listdlg('PromptString','Select experiments to open', ...
@@ -974,7 +1019,7 @@ classdef tps_trial < hgsetget
             % Load the header info
             [h desc] = mesc_header(fmesc);
             nmes = size(desc,1);
-            if ischar(flag)
+            if ischar(flag) || isstring(flag)
                 % Prompt user for a sub-selection?
                 if strcmp(flag,'prompt')
                     subchoice = listdlg('PromptString','Select experiments to open', ...
@@ -1664,7 +1709,7 @@ classdef tps_trial < hgsetget
                 if isempty(fk)
                     ext = 'unsaved_data';
                 else
-                    [dum1 dum2 ext] = fileparts(fk); %#ok<ASGLU>
+                    [dum1, dum2, ext] = fileparts(fk); %#ok<ASGLU>
                     ext = lower(ext(2:end));
                     if length(ext)==1, ext='oldvdaq'; elseif strfind(ext,'blk'), ext='blk'; end
                     if strcmp(ext,'tif') && strcmp(Tk.origin,'ScanImage'), ext='scanimage'; end
@@ -1895,7 +1940,7 @@ classdef tps_trial < hgsetget
     
     % Read data block
     methods
-        function [dat sf] = getdatablock(T,idx)
+        function [dat, sf] = getdatablock(T,idx)
             % function [dat sf] = getdatablock(T,idx)
             %---
             % Read sub-block of data defined by the vector of frame indices
@@ -2007,7 +2052,7 @@ classdef tps_trial < hgsetget
                 % Automatic locating of analog recording file? - TODO: do
                 % this step already when reading the header!!!
                 if isempty(T(k).analogfile)
-                    [d base ext] = fileparts(T(k).file);
+                    [d, base, ext] = fileparts(T(k).file);
                     switch lower(ext(2:end))
                         case {'mat' 'da'}
                             T(k).analogfile = {T(k).file};
@@ -2316,7 +2361,7 @@ classdef tps_trial < hgsetget
             activechg = ~isequal(op([op.active]),T.opmem([T.opmem.active]));
             T.opmem = op;
             if ~activechg, return, end % only inactive part has changed
-            T.conditions.dataopmem = struct; %#ok<MCSUP>
+            T.conditions.dataopmem = struct; 
         end
         function memorizeop(T)
             [T.opmem] = deal(T.opdef);
