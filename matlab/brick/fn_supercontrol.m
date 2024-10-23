@@ -254,13 +254,13 @@ classdef fn_supercontrol < hgsetget
         end
         function display_linepositions(X,klines)
             if nargin<2, klines = 1:length(X.controls); end
-            [W H h] = display_sizes(X);
+            [W, H, h] = display_sizes(X);
             H = H-h;
             sliderval = X.slider.value;
             for i=klines
                 posi = [1 H+(sliderval-i)*h W h];
                 set(X.controls(i).panel,'position',posi, ...
-                    'visible',fn_switch(posi(2)>0 && posi(2)+posi(4)<=H))
+                    'visible',onoff(posi(2)>0 && posi(2)+posi(4)<=H))
             end
         end
         function display_linecontent(X,i)
@@ -274,7 +274,7 @@ classdef fn_supercontrol < hgsetget
             contentpanel = X.controls(i).contentpanel;
             content = cell(1,ncontrol);
             % sizes
-            [W H h hdec hbut hdectext htext] = display_sizes(X); %#ok<ASGLU>
+            [W, H, h, hdec, hbut, hdectext, htext] = display_sizes(X); %#ok<ASGLU>
             pos = get(contentpanel,'position');
             WP = pos(3); 
             wdec = 2;
