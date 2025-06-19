@@ -794,12 +794,13 @@ classdef tps_trial < hgsetget
     methods (Static)
         function [ext, prompt] = knownExtensions()
             ext = {'tptrial','cfd','mpd','xml','mes','mesc','blk','vdq','da', ...
-                'pcl', ...
+                'pcl', 'rsh', ...
                 'avi','bmp','png','jpg','tif','tiff','gif', ...
                 'mat'};
             prompt = {'*.tptrial','Trials';'*.tif','ScanImage';'*.mes;*.mesc','Femtonics'; ...
                 '*.blk;*.vdq','Optical Imaging';'*.da','NeuroPlex';'*.xml','Prairie';'cfd','CFD';'mpd','MPD'; ...
                 '*.pcl','ScienceWares Photon Imaging';...
+                '*.rsh','Micam';...
                 '*.avi','Movie';'*.bmp;*.png;*.jpg;*.tif;*.tiff;*.gif','Image';...
                 '*.mat','Matlab'};
         end
@@ -899,7 +900,12 @@ classdef tps_trial < hgsetget
                         % ScienceWares Photon Imaging System
                         % read both header and data
                         T{k}.file = fk;
-                        readplcheaderanddata(T{k},fk)
+                        readpclheaderanddata(T{k},fk)
+                    case 'rsh'
+                        % Micam
+                        % read both header and data
+                        T{k}.file = fk;
+                        readrshheaderanddata(T{k},fk)
                     case {'bmp' 'png' 'jpg' 'tif'} %#ok<MDUPC>
                         T{k}.file = fk;
                         % no header information -> some default values
@@ -1604,7 +1610,7 @@ classdef tps_trial < hgsetget
             end
             T.fullinfo.acq = acq;
         end
-        function readplcheaderanddata(T,fname)
+        function readpclheaderanddata(T,fname)
             [data param] = pcl_read(fname);
             T.fullinfo.movie_param = param;
             T.type = 'movie';
@@ -1621,6 +1627,19 @@ classdef tps_trial < hgsetget
                 T.stimid(k) = addstim(T.stimtable,k-1);
             end
             T.setdata(data)
+        end
+        function readrshheaderanddata(T,fname)
+            data = micam_read(fname);
+            T.type = 'movie';
+            T.scanning = false;
+            T.dx = 1;
+            T.dy = 1;
+            T.dz = 0;
+            T.dt = 1;
+            T.t0 = 0;
+            T.xunit = 'px';
+            T.tunit = 'frame';
+            T.setdata(data.matrix)
         end
     end
     methods
