@@ -329,6 +329,8 @@ classdef tpview < interface
             if ismember('spikes',V.modules), menus_spikes(V), end
             V.menus.sep3 = uimenu('parent',V.hf,'label','|','enable','off');
             menus_scripts(V)
+            V.menus.sep4 = uimenu('parent',V.hf,'label','|','enable','off');
+            menus_help(V)
             % set condition menus
             V.menus.items.ncond = 1; % current setting valid for a unique condition
             data_conditionmenus(V)
@@ -1455,6 +1457,32 @@ classdef tpview < interface
             end
             uimenu(m,'label','Re-scan scripts folder','separator',onoff(~ispc), ...
                 'callback',@(u,e)menus_scripts(V))
+        end
+        function menus_help(V)
+            % init menu
+            hf = V.grob.hf;
+            if ~isfield(V.menus,'help') || ~any(ishandle(V.menus.help))
+                V.menus.help = uimenu('parent',hf,'label','Help');
+            end
+            m = V.menus.help;
+            delete(get(m,'children')) % needed when re-scanning
+            
+            doc_file = fullfile( ...
+                fileparts(fileparts(which('optimage'))), ...
+                'documentation', 'Optimage User Manual.pdf');
+            mouse_file = fullfile( ...
+                fileparts(fileparts(which('optimage'))), ...
+                'documentation', 'optimage mouse actions.pdf');
+
+            function open_pdf(file)
+                system(['start "" "' file '"']);
+            end
+            
+            uimenu(m,'label','OptImage doc', ...
+                'callback',@(u,e)open_pdf(doc_file))
+            
+            uimenu(m,'label','Mouse actions', ...
+                'callback',@(u,e)open_pdf(mouse_file))
         end
     end
     
